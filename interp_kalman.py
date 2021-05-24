@@ -92,6 +92,24 @@ ax.scatter(idx, interp3, label=r'CAUSAL WIENER INTERPOLATION w/ ERROR: %.2f' %(b
 ax.scatter(idx, prediction[idx-1], label=r'KALMAN FILTER w/ ERROR: %.2f' %(update_var[idx-1]))
 ax.legend(loc='upper left', frameon=True, framealpha=0.8, facecolor='white')
 utils.plot_signal(np.arange(0,100), signal, ax=ax, plot_colour='blue',
-    legend_label=r'TRUE SIGNAL', save=path+'comparison')
+    legend_label=r'TRUE SIGNAL', title_text=r'INTERPOLATION AT %d' %(idx), save=path+'comparison1')
 
-# %%
+# %% COMPARISON
+
+idx = 10
+for i in range(1, idx):
+    update[i], update_var[i], prediction[i], prediction_var[i] = \
+        utils.kf(measurements[i], meas_noise_var, process_noise_var, update[i-1], update_var[i-1], alpha)
+
+interp3, bmse3 = utils.wiener_interpolator3(signal, idx, alpha)
+
+# %% PLOTS
+
+plt.figure(figsize=(12,6))
+ax = plt.gca()
+
+ax.scatter(idx, interp3, label=r'CAUSAL WIENER INTERPOLATION w/ ERROR: %.2f' %(bmse3))
+ax.scatter(idx, prediction[idx-1], label=r'KALMAN FILTER w/ ERROR: %.2f' %(update_var[idx-1]))
+ax.legend(loc='upper left', frameon=True, framealpha=0.8, facecolor='white')
+utils.plot_signal(np.arange(0,100), signal, ax=ax, plot_colour='blue',
+    legend_label=r'TRUE SIGNAL', title_text=r'INTERPOLATION AT %d' %(idx), save=path+'comparison2')

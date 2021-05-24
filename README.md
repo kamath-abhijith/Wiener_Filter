@@ -22,4 +22,5 @@ conda create --name <env> --file requirements.txt
 
 ## Run
 
-(under construction)
+- Run `interp_wiener.py` to generate Figure 1.
+- Run `interp_kalman.py` to generate Figure 2 and 3.
