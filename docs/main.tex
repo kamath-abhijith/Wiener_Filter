@@ -74,13 +74,12 @@
 
 \newcommand{\by}{\mathbf{y}}
 \newcommand{\br}{\mathbf{r}}
-\newcommand{\bd}{\mathbf{d}}
-\newcommand{\bn}{\mathbf{n}}
+\newcommand{\ba}{\mathbf{a}}
 \newcommand{\bh}{\mathbf{h}}
 \newcommand{\bx}{\mathbf{x}}
 \newcommand{\be}{\mathbf{e}}
 \newcommand{\bw}{\mathbf{w}}
-\newcommand{\bW}{\mathbf{W}}
+\newcommand{\bR}{\mathbf{R}}
 \newcommand{\bI}{\mathbf{I}}
 \newcommand{\bA}{\mathbf{A}}
 \newcommand{\bH}{\mathbf{H}}
@@ -128,18 +127,94 @@
 
 \subsection*{Part A: Derivation and Modelling}
 \label{subsec:partA}
+Consider the auto-regressive signal of order $1$ modelled using the parameter $\alpha \in \rr$ as: $x(n) = \alpha x(n-1) + w(n)$ where $w(n)$ is additive white Gaussian noise with variance $\sigma_{w}^{2}$. The measurements of the signal $x$ is incomplete with one sample missing at index $n_{0}$. The $N-1$ length measurement vector can be given as $\bx = [ x(0) \; x(1) \; \cdots \; x(n_{0}-1) \; x(n_{0}+1) \; \cdots \; x(N-1) ]^{\TT}$. The interpolation problem is to estimate the sample $x(n_{0})$ given complete or partial information $\bx$.
 
+Consider the auto-regressive sequence of order $1$, modelled as
+\begin{equation}
+	x(n) = \alpha x(n-1) + w(n),
+\end{equation}
+where $w(n) \overset{\text{iid}}{\sim} \mathcal{N}(0, \sigma_{w}^{2})$. The autocorrelation sequence $r_{k} = \Ex[x(n) x(n-k)]$ can be computed as:
+\begin{equation}
+\begin{split}
+	r_{k} &= \Ex[x(n) x(n-k)] \\
+	&= \Ex \left[ (\alpha x(n-1) + w(n)) x(n-k) \right] \\
+	&= \alpha \Ex \left[ x(n-1) x(n-k) \right] + \Ex \left[ w(n) x(n-k) \right] \\
+	& \overset{(a)}{=} \alpha r_{k-1},
+\end{split}
+\end{equation}
+where $(a)$ follows from assuming the noise and the signal are independent. The autocorrelation sequence has a recursive form, with
+\begin{equation}
+\begin{split}
+	r_{0} &= \Ex \left[ (\alpha x(n-1) + w(n)) (\alpha x(n-1) + w(n)) \right], \\
+	&= \Ex \left[ \alpha^{2} x(n-1) x(n-1) + 2\alpha x(n-1) w(n) + w(n) w(n) \right], \\
+	&= \alpha^{2} r_{0} + \sigma_{w}^{2}, \\
+	\implies r_{0} &= \frac{\sigma_{w}^{2}}{1-\alpha^{2}}.
+\end{split}
+\end{equation}
 
 % -----------------------------------------------------------------------------------------------------------------------
 
 \subsubsection*{Wiener Interpolator}
 \label{subsubsec:wiener}
 
+The full Wiener interpolator is a linear estimator that minimises the Bayesian mean-squared error (BMSE) using all the sample points in $\bx$. The Wiener interpolator is of the form $\hat{x}_{WF}(n_{0}) = \sum_{i=0, i\neq n_{0}}^{N-1} a_{i} x(i) = \ba_{WF}^\TT \bx$, where the weights of the linear interpolator are in the vector $\ba = [a_{0} \; a_{1} \; \cdots \; a_{n_{0}-1} \; a_{n_{0}+1} \; \cdots \; a_{N-1}]^{\TT}$. The BMSE of some estimator $\hat{x}(n_{0})$ as a function of the weight vector $\ba$:
+\begin{equation}
+\begin{split}
+	bmse(\hat{x}(n_{0})) &= \Ex \left[ \left( x(n_{0}) - \hat{x}(n_{0}) \right)^{2} \right], \\
+	&= \Ex \left[ x(n_{0})x(n_{0}) - 2x(n_{0}) \ba^{\TT}\bx + \ba^{\TT} \bx \bx^{\TT} \ba \right].
+\end{split}
+\label{eq:bmse}
+\end{equation}
+The Wiener interpolator is the minimiser of BMSE with respect to the weights $\ba$. The Wiener interpolator has weights that satisfy the equation:
+\begin{equation}
+	\frac{\partial}{\partial \ba} bmse(\hat{x}_{WF}(n_{0})) = \Ex \left[ -2 x(n_{0})\bx + 2\bx\bx^{\TT} \ba_{WF} \right] = \zerovec,
+\end{equation}
+i.e., the weights satisfy the linear system of equations $\Ex [\bx\bx^{\TT}] \ba_{WF} = \Ex[x(n_{0}) \bx]$:
+\begin{equation}
+	\underbrace{\begin{bmatrix}
+		r_{0} & r_{1} & \cdots & r_{n_{0}-1} & r_{n_{0}+1} & \cdots & r_{N-1} \\
+		r_{1} & r_{0} & \cdots & \cdots & \cdots & \cdots & r_{N-2} \\
+		\vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
+		r_{n_{0}-1} & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
+		r_{n_{0}+1} & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
+		\vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
+		r_{N-1} & r_{N-2} & \cdots & \cdots & \cdots & \cdots & r_{0}
+	\end{bmatrix}}_{\mathbf{R}_{WF}} \ba_{WF} = 
+	\underbrace{\begin{bmatrix}
+		r_{n_{0}} \\ r_{n_{0}-1} \\ \vdots \\ r_{1} \\ r_{1} \\ \vdots \\ r_{N-n_{0}-1}
+	\end{bmatrix}}_{\mathbf{r}_{WF}}.
+\label{eq:WFlinearSystem}
+\end{equation}
+Therefore, the Wiener interpolator has weights $\ba_{WF} = \bR_{WF}^{-1} \br_{WF}$, and hence $\hat{x}_{WF}(n_{0}) = {\ba_{WF}}^{\TT}\bx$. Using this in (\ref{eq:WFbmse}),
+\begin{equation}
+\begin{split}
+	bmse(\hat{x}_{WF}(n_{0})) &= \Ex \left[ x(n_{0})x(n_{0}) - 2x(n_{0}) \bx^{\TT} \bR_{WF}^{-1} \br_{WF} + \br_{WF}^{\TT} \bR_{WF}^{-T} \bx \bx^{\TT} \bR_{WF}^{-1} \br_{WF} \right], \\
+	&= r_{0} - 2 \br_{WF}^{\TT} \bR_{WF}^{-1} \br_{WF} + \br_{WF}^{\TT} \bR_{WF}^{-1} \br_{WF}, \\
+	&= r_{0} - \br_{WF}^{\TT} \bR_{WF}^{-1} \br_{WF}.
+\end{split}
+\label{eq:WFbmse}
+\end{equation}
 
 % -----------------------------------------------------------------------------------------------------------------------
 
 \subsubsection*{Two-Point-Average Interpolator}
 \label{subsubsec:avginterp}
+
+The two-point average (TPA) interpolator is a linear estimator that minimises the BMSE using the adjacent samples to the missing sample. The TPA interpolator has the form $\hat{x}_{TPA}(n_{0}) = a_{1}x(n_{0}-1) + a_{2}x(n_{0}+1)$, where $\ba_{TPA} = [a_{1} \; a_{2}]^{\TT}$ are the parameters of the estimator. An estimator with this structure is similar to the Wiener interpolator where the coefficients other than that of $x(n_{0}-1)$ and $x(n_{0}+1)$ are set to zero. The corresponding solution is obtained from (\ref{eq:WFlinearSystem}) by taking the $2\times 2$ block:
+\begin{equation}
+	\underbrace{\begin{bmatrix}
+		r_{0} & r_{2} \\
+		r_{2} & r_{0}
+	\end{bmatrix}}_{\bR_{TPA}} \ba_{TPA} = 
+	\underbrace{\begin{bmatrix}
+		r_{1} \\ r_{1}
+	\end{bmatrix}}_{\br_{TPA}}.
+\end{equation}
+Therefore, the two-point average interpolator has weights $\ba_{TPA} = \bR_{TPA}^{-1}\br_{TPA}$, and hence $\hat{x}_{TPA}(n_{0}) = \ba_{TPA}^{\TT} [x(n_{0}-1) \; x(n_{0}+1)]^{\TT}$. The solution here can be obtained in closed form with $\displaystyle a_{1} = a_{2} = \frac{\alpha}{1+\alpha^{2}}$. Similar to the calculation in (\ref{eq:WFbmse}), the BMSE for TPA interpolator is:
+\begin{equation}
+	bmse(\hat{x}_{TPA}(n_{0})) = r_{0} - \br_{TPA}^{\TT} \bR_{TPA}^{-1} \br_{TPA}.
+\label{eq:TPAbmse}
+\end{equation}
 
 
 % -----------------------------------------------------------------------------------------------------------------------
@@ -147,6 +222,24 @@
 \subsubsection*{Causal Wiener Interpolator}
 \label{subsubsec:causalwiener}
 
+The causal Wiener (CWF) interpolator is a linear estimator that minimises the BMSE using only the previous samples to the missing samples. The CWF interpolator has the form $\hat{x}_{CWF}(n_{0}) = \sum_{i=0}^{n_{0}-1} a_{i} x(i)$, where $\ba_{CWF} = [a_{0} \; a_{1} \; \cdots \; a_{n_{0}-1}]^{\TT}$ are the parameters of the estimator. This is similar to the structure in the Wiener filter with the coefficients of the positive delays set to zero. The corresponding solution is obtained from (\ref{eq:WFlinearSystem}) by taking the top right $n_{0} \times n_{0}$ block:
+\begin{equation}
+	\underbrace{\begin{bmatrix}
+		r_{0} & r_{1} & \cdots & r_{n_{0}-1} \\
+		r_{1} & r_{0} & \cdots & r_{n_{0}-2} \\
+		\vdots & \vdots & \vdots & \vdots \\
+		r_{n_{0}-1} & \cdots & \cdots & r_{0} \\
+	\end{bmatrix}}_{\mathbf{R}_{CWF}} \ba_{CWF} = 
+	\underbrace{\begin{bmatrix}
+		r_{n_{0}} \\ r_{n_{0}-1} \\ \vdots \\ r_{1}
+	\end{bmatrix}}_{\mathbf{r}_{WF}}.
+\label{eq:WFlinearSystem}
+\end{equation}
+Therefore, the causal Wiener interpolator has weights $\ba_{CWF} = \bR_{CWF}^{-1}\br_{CWF}$, and hence $\hat{x}_{CWF}(n_{0}) = \ba_{CWF}^{\TT} [x(0) \; \cdots \; x(n_{0}-1)]^{\TT}$. Similar to the calculation in (\ref{eq:WFbmse}), the BMSE for TPA interpolator is:
+\begin{equation}
+	bmse(\hat{x}_{CWF}(n_{0})) = r_{0} - \br_{CWF}^{\TT} \bR_{CWF}^{-1} \br_{CWF}.
+\label{eq:CWFbmse}
+\end{equation}
 
 % -----------------------------------------------------------------------------------------------------------------------
 
