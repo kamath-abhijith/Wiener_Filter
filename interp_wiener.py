@@ -26,7 +26,7 @@ plt.rcParams.update({
     "font.family": "serif",
     "font.serif": ["cm"],
     "mathtext.fontset": "cm",
-    "font.size": 11})
+    "font.size": 24})
 
 # %% INITIALISATION
 

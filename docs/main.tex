@@ -132,6 +132,7 @@ Consider the auto-regressive signal of order $1$ modelled using the parameter $\
 Consider the auto-regressive sequence of order $1$, modelled as
 \begin{equation}
 	x(n) = \alpha x(n-1) + w(n),
+\label{eq:signalModel}
 \end{equation}
 where $w(n) \overset{\text{iid}}{\sim} \mathcal{N}(0, \sigma_{w}^{2})$. The autocorrelation sequence $r_{k} = \Ex[x(n) x(n-k)]$ can be computed as:
 \begin{equation}
@@ -246,6 +247,20 @@ Therefore, the causal Wiener interpolator has weights $\ba_{CWF} = \bR_{CWF}^{-1
 \subsubsection*{Kalman Filter}
 \label{subsubsec:kalman}
 
+Suppose the measurements of the signal be noisy, i.e., $y(n) = x(n) + v(n)$, where $v(n) \overset{\text{iid}}{\sim} \mathcal{N}(0, \sigma_{v}^{2})$. The observation matrix is identity. The state evolution is given by the auto-regressive process with order $1$ as in (\ref{eq:signalModel}), and the state-transition matrix is the scalar $\alpha$. With some initialisation for the signal $\hat{x}(0 | 0)$ and variance of the error $P(0|0)$, the Kalman filter predictions are given as:
+\begin{equation}
+\begin{split}
+	\hat{x}(n|n-1) &= \alpha \hat{x}(n-1 | n-1), \\
+	P(n | n-1) &= \alpha^{2}P(n-1 | n-1) + \sigma_{w}^{2}.
+\end{split}
+\end{equation}
+The Kalman gain is defined as $K(n) = P(n | n-1) \left( \sigma_{v}^{2} + P(n | n-1) \right)^{-1}$. The update on the signal and the variance of the error are given by:
+\begin{equation}
+\begin{split}
+	\hat{x}(n|n) &= \hat{x}(n | n-1) + K(n) \left( y(n) + \hat{x}(n | n-1) \right), \\
+	P(n | n) &= (1 - K(n)) P(n | n-1).
+\end{split}
+\end{equation}
 
 % -----------------------------------------------------------------------------------------------------------------------
 % -----------------------------------------------------------------------------------------------------------------------
@@ -253,28 +268,57 @@ Therefore, the causal Wiener interpolator has weights $\ba_{CWF} = \bR_{CWF}^{-1
 \subsection*{Part B: Implementation}
 \label{subsec:partB}
 
+Figure \ref{fig:wiener} shows Monte-Carlo simulation of interpolation using Wiener interpolation methods. The auto-regressive signal of order $1$ with varying $\alpha$ from $0.1$ to $0.9$ are taken with noise variance fixed at $\sigma_{w}^{2} = 0.36$. The same signal is subject to interpolation at index $40$ using three methods based on the Wiener filter idea. The errors upon averaging over $1000$ realisations are shown in Figure \ref{fig:wiener}.
+
+\begin{figure}[t]
+\centering
+\subfigure[]{\label{fig:a}\includegraphics[width=3in]{../results/wiener1.pdf}}
+\subfigure[]{\label{fig:b}\includegraphics[width=3in]{../results/wiener2.pdf}}
+\subfigure[]{\label{fig:c}\includegraphics[width=3in]{../results/wiener3.pdf}}
+\caption{Monte-Carlo analysis of interpolation using Wiener interpolation methods.}
+\label{fig:wiener}
+\end{figure}
+
 % -----------------------------------------------------------------------------------------------------------------------
 
 \subsubsection*{Wiener Interpolator}
 \label{subsubsec:wienerimplementation}
 
+Figure \ref{fig:wiener}(a) shows the Monte-Carlo simulation using complete Wiener filter. The BMSE decreases with $\alpha$ increasing up to $0.6$, and then increases. The theoretical mean-squared error (TMSE) shows a decreasing trend with increasing $\alpha$. It can be seen that the BMSE can be lower than the TMSE, which is indicative of Bayesian methods that introduce bias to reduce the error. As $\alpha$ increases, the signal is approximately a constant buried in noise, where the estimation becomes difficult.
 
 % -----------------------------------------------------------------------------------------------------------------------
 
 \subsubsection*{Two-Point-Average Interpolator}
 \label{subsubsec:avgimplementation}
 
+Figure \ref{fig:wiener}(b) shows the Monte-Carlo simulation using two-point average interpolation. The BMSE and TMSE decrease with $\alpha$ and the BMSE is always lower than the TMSE. The two-point average interpolation only considers the relevant sample points and therefore is numerically more stable.
 
 % -----------------------------------------------------------------------------------------------------------------------
 
 \subsubsection*{Causal Wiener Interpolator}
 \label{subsubsec:causalimplementation}
 
+Figure \ref{fig:wiener}(c) shows the Monte-Carlo simulation using causal Wiener interpolation. The BMSE decreases with $\alpha$ increasing up to $0.6$, and then increases. The theoretical mean-squared error (TMSE) shows a decreasing trend with increasing $\alpha$. The errors are higher than the errors using the complete Wiener interpolation as shown in Figure \ref{fig:wiener}(a) as the complete Wiener interpolation uses more samples than the causal Wiener interpolation.
 
 % -----------------------------------------------------------------------------------------------------------------------
 
 \subsubsection*{Kalman Filter}
 \label{subsubsec:kalmanimplementation}
+
+Figure \ref{fig:kalman} shows the results of interpolation using Kalman filter. The auto-regressive signal of order $1$ with $\alpha = 0.8$ is taken with noise variance $\sigma_{w}^{2} = 0.36$. The signal is measured directly with Gaussian measurement noise of variance $\sigma_{w}^{2} = 1$. Figure \ref{fig:kalman}(a) shows the true signal and the estimated signal. It can be seen that the estimated signal follows the true signal with an approximately constant delay. This can be seen in \ref{fig:kalman}(b) with the errors saturating at constant values. The errors are high initially as the random initialisations maybe inaccurate, however, with future updates the errors settle.
+
+\begin{figure}[t]
+\centering
+\subfigure[]{\label{fig:a}\includegraphics[width=3in]{../results/kalman1.pdf}}
+\subfigure[]{\label{fig:b}\includegraphics[width=3in]{../results/kalman2.pdf}}
+\caption{Interpolation using Kalman filter.}
+\label{fig:kalman}
+\end{figure}
+
+% -----------------------------------------------------------------------------------------------------------------------
+
+\subsubsection*{Comparison: Causal Wiener Interpolation vs. Kalman Filter}
+\label{subsubsec:comparison}
 
 
 % -----------------------------------------------------------------------------------------------------------------------

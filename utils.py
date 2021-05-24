@@ -155,8 +155,33 @@ def wiener_interpolator3(signal, idx, alpha, noise_var=0.36):
     
     return interp, bmse
 
-def kf():
-    pass
+def kf(meas, meas_noise_var, process_noise_var, prediction,
+    prediction_var, alpha=0.8):
+    '''
+    Kalman filter update for noisy measurements of AR1 signal
+
+    :param meas: latest measurement
+    :param meas_noise_var: variance of measurements
+    :param process_noise_var: variance of process
+    :param prediction: signal prediction
+    :param prediction_var: variance of prediction
+
+    :return update: signal update
+    :return update_var: variance of the update
+    :return up_pred: updated prediction
+    :return up_pred_var: updated variance of prediction
+
+    '''
+
+    up_pred = alpha * prediction
+    up_pred_var = alpha**2 * prediction_var + process_noise_var
+
+    kalman_gain = up_pred_var / (meas_noise_var + up_pred_var)
+
+    update = up_pred + kalman_gain * (meas - up_pred)
+    update_var = (1 - kalman_gain) * up_pred_var
+
+    return update, update_var, up_pred, up_pred_var
 
 # %% PLOTTING
 
